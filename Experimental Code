@@ -1,0 +1,609 @@
+#include <iostream>
+#include <random>
+#include <ranges>
+#include <algorithm>
+#include <vector>
+#include <chrono>
+
+using namespace std::chrono;
+using namespace std;
+
+
+
+//
+
+//
+
+//
+
+// The different types of lists
+class ListGenerator {
+public:
+    // Constructor
+    ListGenerator(int size, const string& type) : size(size), type(std::move(type)) {}
+
+    // Function to generate the list based on the specified type
+    vector<int> generateList() const {
+        vector<int> list(size);
+
+        if (type == "random") {
+            // Generate a random list
+            srand(time(0));
+            for (int i = 0; i < size; i++) {
+                list[i] = rand() % 100;
+            }
+        } else if (type == "sorted") {
+            // Generate a sorted list
+            for (int i = 0; i < size; i++) {
+                list[i] = i + 1;
+            }
+        } else if (type == "reverse") {
+            // Generate a reverse sorted list
+            for (int i = 0; i < size; i++) {
+                list[i] = size - i;
+            }
+        } else if (type == "nearlySorted") {
+            // Generate a nearly sorted list
+            for (int i = 0; i < size; i++) {
+                list[i] = i + 1;
+            }
+            // Swap a few elements randomly to make it nearly sorted
+            srand(time(0));
+            int numSwaps = size / 10;  // Number of swaps (10% of the size)
+            for (int i = 0; i < numSwaps; i++) {
+                int index1 = rand() % size;
+                int index2 = rand() % size;
+                swap(list[index1], list[index2]);
+            }
+        } else if (type == "duplicate") {
+            // Generate a list with duplicate values
+            for (int i = 0; i < size; i++) {
+                list[i] = rand() % 10 + 1;  // Generate random numbers from 1 to 10
+            }
+        } else if (type == "small") {
+            // Generate a small list (size <= 10)
+            //size = rand() % 10 + 1;  // Random size between 1 and 10
+            list.resize(size);
+            for (int i = 0; i < size; i++) {
+                list[i] = rand() % 100;
+            }
+        } else if (type == "large") {
+            // Generate a large list (size >= 10^6)
+            //size = 1000000;  // Set a fixed large size (10^6)
+            list.resize(size);
+            srand(time(0));
+            for (int i = 0; i < size; i++) {
+                list[i] = rand() % 100;
+            }
+        } else if (type == "uniform") {
+            // Generate a list with uniformly distributed values
+            srand(time(0));
+            for (int i = 0; i < size; i++) {
+                list[i] = i + 1;
+            }
+            // Shuffle the elements randomly
+            random_shuffle(list.begin(), list.end());
+        } else if (type == "skewed") {
+            // Generate a list with skewed distribution of values
+            for (int i = 0; i < size; i++) {
+                list[i] = i % 10 + 1;  // Values range from 1 to 10
+            }
+        } else if (type == "boundary") {
+            // Generate a list with boundary cases (empty list, single element list)
+            if (size >= 2) {
+                list.resize(size);
+                // Generate an empty list
+                list.clear();
+
+            } else if (size == 1) {
+                // Generate a single element list
+                list[0] = rand() % 100;
+            }
+        }
+
+
+        return list;
+    }
+
+private:
+    int size;
+    string type;
+};
+
+
+// Function to print the list
+void printList(const vector<int>& list) {
+    for (int num : list) {
+        cout << num << " ";
+    }
+    cout << endl;
+}
+
+
+//
+//The functions for the sorting algorithms
+//
+
+
+// Bubble Sort - 9
+//
+//
+//
+void bubbleSort(vector<int>& list) {
+    int size = list.size();
+
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (list[j] > list[j + 1]) {
+                swap(list[j], list[j + 1]);
+            }
+        }
+    }
+}
+
+
+// Selection Sort - 8
+//
+//
+//
+void selectionSort(vector<int>& list) {
+    int size = list.size();
+
+    for (int i = 0; i < size - 1; i++) {
+        int minIndex = i;
+
+        // Find the minimum element in the unsorted part of the list
+        for (int j = i + 1; j < size; j++) {
+            if (list[j] < list[minIndex]) {
+                minIndex = j;
+            }
+        }
+
+        // Swap the minimum element with the first element of the unsorted part
+        swap(list[i], list[minIndex]);
+    }
+}
+
+
+// Insertion Sort - 7
+//
+//
+//
+void insertionSort(vector<int>& list) {
+    int size = list.size();
+
+    for (int i = 1; i < size; i++) {
+        int key = list[i];
+        int j = i - 1;
+
+        while (j >= 0 && list[j] > key) {
+            list[j + 1] = list[j];
+            j--;
+        }
+
+        list[j + 1] = key;
+    }
+}
+
+
+// Bucket Sort - 6
+//
+//
+//
+void bucketSort(vector<int>& list) {
+    int size = list.size();
+
+    // Find the maximum element in the list
+    int maxVal = *max_element(list.begin(), list.end());
+
+    // Create buckets and distribute the elements into them
+    int numBuckets = 10; // Assuming 10 buckets for simplicity
+    vector<vector<int>> buckets(numBuckets);
+
+    for (int i = 0; i < size; i++) {
+        int bucketIndex = (list[i] * numBuckets) / (maxVal + 1);
+        buckets[bucketIndex].push_back(list[i]);
+    }
+
+    // Sort individual buckets and concatenate them into the final sorted list
+    int currentIndex = 0;
+
+    for (int i = 0; i < numBuckets; i++) {
+        sort(buckets[i].begin(), buckets[i].end());
+
+        for (int j = 0; j < buckets[i].size(); j++) {
+            list[currentIndex++] = buckets[i][j];
+        }
+    }
+}
+
+
+// Radix Sort - 5
+//
+//
+//
+/*
+// Function to get the maximum value in the list
+int getMax(const vector<int>& list) {
+    int maxVal = list[0];
+    for (int i = 1; i < list.size(); i++) {
+        if (list[i] > maxVal) {
+            maxVal = list[i];
+        }
+    }
+    return maxVal;
+}
+*/
+
+// Counting sort for a specific digit (exp)
+void countingSortRadix(vector<int>& list, int exp) {
+    int size = list.size();
+    const int radix = 10;
+    vector<int> count(radix, 0);
+    vector<int> output(size);
+
+    // Calculate the frequency of each digit at the current digit position
+    for (int i = 0; i < size; i++) {
+        count[(list[i] / exp) % radix]++;
+    }
+
+    // Calculate the cumulative count array
+    for (int i = 1; i < radix; i++) {
+        count[i] += count[i - 1];
+    }
+
+    // Build the sorted output array based on the current digit position
+    for (int i = size - 1; i >= 0; i--) {
+        output[count[(list[i] / exp) % radix] - 1] = list[i];
+        count[(list[i] / exp) % radix]--;
+    }
+
+    // Copy the sorted output array back to the original list
+    for (int i = 0; i < size; i++) {
+        list[i] = output[i];
+    }
+}
+
+void radixSort(vector<int>& list) {
+    int maxVal = *max_element(list.begin(), list.end());
+
+    // Perform counting sort for each digit position
+    for (int exp = 1; maxVal / exp > 0; exp *= 10) {
+        countingSortRadix(list, exp);
+    }
+}
+
+
+// Counting Sort - 4
+//
+//
+//
+void countingSort(vector<int>& list) {
+    int size = list.size();
+
+    // Find the maximum value in the list
+    int maxVal = *max_element(list.begin(), list.end());
+
+    // Create a count array to store the frequency of each element
+    vector<int> count(maxVal + 1, 0);
+
+    // Calculate the frequency of each element
+    for (int i = 0; i < size; i++) {
+        count[list[i]]++;
+    }
+
+    // Calculate the cumulative count array
+    for (int i = 1; i <= maxVal; i++) {
+        count[i] += count[i - 1];
+    }
+
+    // Create a temporary output array
+    vector<int> output(size);
+
+    // Build the output array using the count array
+    for (int i = size - 1; i >= 0; i--) {
+        output[count[list[i]] - 1] = list[i];
+        count[list[i]]--;
+    }
+
+    // Copy the sorted output array back to the original list
+    for (int i = 0; i < size; i++) {
+        list[i] = output[i];
+    }
+}
+
+
+// Heap Sort - 3
+//
+//
+//
+void heapify(vector<int>& list, int size, int root) {
+    int largest = root;
+    int leftChild = 2 * root + 1;
+    int rightChild = 2 * root + 2;
+
+    // Find the largest element among the root, left child, and right child
+    if (leftChild < size && list[leftChild] > list[largest]) {
+        largest = leftChild;
+    }
+
+    if (rightChild < size && list[rightChild] > list[largest]) {
+        largest = rightChild;
+    }
+
+    // If the largest element is not the root, swap it with the root and recursively heapify the affected subtree
+    if (largest != root) {
+        swap(list[root], list[largest]);
+        heapify(list, size, largest);
+    }
+}
+
+void heapSort(vector<int>& list) {
+    int size = list.size();
+
+    // Build a max heap by rearranging the elements
+    for (int i = size / 2 - 1; i >= 0; i--) {
+        heapify(list, size, i);
+    }
+
+    // Extract elements from the heap one by one and place them at the end of the list
+    for (int i = size - 1; i > 0; i--) {
+        swap(list[0], list[i]);
+        heapify(list, i, 0);
+    }
+}
+
+
+// Quick Sort - 2
+//
+//
+//
+/*
+  int getMax(const vector<int>& list, int low, int high) {
+    int maxVal = list[low];
+    for (int i = low + 1; i <= high; i++) {
+        if (list[i] > maxVal) {
+            maxVal = list[i];
+        }
+    }
+    return maxVal;
+}
+*/
+
+int partition(vector<int>& list, int low, int high) {
+    int pivot = list[high];
+    int i = low - 1;
+
+    for (int j = low; j <= high - 1; j++) {
+        if (list[j] < pivot) {
+            i++;
+            swap(list[i], list[j]);
+        }
+    }
+
+    swap(list[i + 1], list[high]);
+    return (i + 1);
+}
+
+void quickSort(vector<int>& list, int low, int high) {
+    if (low < high) {
+        // int maxVal = getMax(list, low, high);
+        int pivotIndex = partition(list, low, high);
+
+        // Recursively sort the elements before and after the partition
+        quickSort(list, low, pivotIndex - 1);
+        quickSort(list, pivotIndex + 1, high);
+    }
+}
+
+
+// Merge Sort - 1
+//
+//
+//
+// Merge two sorted arrays into one sorted array
+void merge(vector<int>& list, int low, int mid, int high) {
+    int leftSize = mid - low + 1;
+    int rightSize = high - mid;
+
+    // Create temporary arrays for the left and right arrays
+    vector<int> left(leftSize);
+    vector<int> right(rightSize);
+
+    // Copy data from the main list to the temporary arrays
+    for (int i = 0; i < leftSize; i++) {
+        left[i] = list[low + i];
+    }
+
+    for (int j = 0; j < rightSize; j++) {
+        right[j] = list[mid + 1 + j];
+    }
+
+    // Merge the two temporary arrays back into the main list
+    int i = 0;  // Index of the left subarray
+    int j = 0;  // Index of the right subarray
+    int k = low;  // Index of the merged subarray
+
+    while (i < leftSize && j < rightSize) {
+        if (left[i] <= right[j]) {
+            list[k] = left[i];
+            i++;
+        } else {
+            list[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Copy the remaining elements of the left subarray
+    while (i < leftSize) {
+        list[k] = left[i];
+        i++;
+        k++;
+    }
+
+    // Copy the remaining elements of the right subarray
+    while (j < rightSize) {
+        list[k] = right[j];
+        j++;
+        k++;
+    }
+}
+
+// Merge sort function
+void mergeSort(vector<int>& list, int low, int high) {
+    if (low < high) {
+        int mid = low + (high - low) / 2;
+
+        // Recursively sort the left and right arrays
+        mergeSort(list, low, mid);
+        mergeSort(list, mid + 1, high);
+
+        // Merge the sorted arrays
+        merge(list, low, mid, high);
+    }
+}
+
+//
+//
+//
+//
+//
+
+int main() {
+
+    cout << "Hello, World! =) " << endl;
+    cout << "This code is used for the experimental part" << endl;
+    cout << "of the sad and pitiful attempt of an overview" << endl;
+    cout << "of the most basic sorting algorithms" << endl << endl;
+
+    int size;
+    cout << "Enter how many elements should the list have (type a number): ";
+    cin >> size;// Specify the size of the list
+    cout << endl;
+
+    string type;
+    cout << "What kind of list should be tested (random, sorted, reverse, nearlySorted, duplicate, small, large, uniform, skewed, boundary - empty list, single element list ): ";
+    cin >> type;// Specify the size of the list
+    cout << endl;
+
+    // Create a ListGenerator object
+    ListGenerator generator(size, type);
+
+    // Generate the list
+    vector<int> list = generator.generateList();
+
+    // Print the generated list
+    cout << "Generated list: ";
+    for (int num : list) {
+        cout << num << " ";
+    }
+    cout << endl << endl;
+
+    int var = 0;
+    cout << "press 1 for Merge Sort" << endl;
+    cout << "press 2 for Quick Sort" << endl;
+    cout << "press 3 for Heap Sort" << endl;
+    cout << "press 4 for Counting Sort" << endl;
+    cout << "press 5 for Radix Sort" << endl;
+    cout << "press 6 for Bucket Sort" << endl;
+    cout << "press 7 for Insertion Sort" << endl;
+    cout << "press 8 for Selection Sort" << endl;
+    cout << "press 9 for Bubble Sort" << endl;
+    cin >> var;
+
+    if (var == 9)
+    {
+        // Test and print the sorted lists using different sorting algorithms
+        auto start = high_resolution_clock::now();
+        bubbleSort(list);
+        cout << "Bubble Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Bubble sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 8)
+    {
+        auto start = high_resolution_clock::now();
+        selectionSort(list);
+        cout << "Selection Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Selection sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+
+    else if (var == 7)
+    {
+        auto start = high_resolution_clock::now();
+        insertionSort(list);
+        cout << "Insertion Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Insertion sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 6)
+    {
+        auto start = high_resolution_clock::now();
+        bucketSort(list);
+        cout << "Bucket Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Bucket sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 5)
+    {
+        auto start = high_resolution_clock::now();
+        radixSort(list);
+        cout << "Radix Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Radix sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 4)
+    {
+        auto start = high_resolution_clock::now();
+        countingSort(list);
+        cout << "Counting Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Counting sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 3)
+    {
+        auto start = high_resolution_clock::now();
+        heapSort(list);
+        cout << "Heap Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Heap sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 2)
+    {
+        auto start = high_resolution_clock::now();
+        quickSort(list, 0, size - 1);
+        cout << "Quick Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Quick sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+    else if (var == 1)
+    {
+        auto start = high_resolution_clock::now();
+        mergeSort(list, 0, size - 1);
+        cout << "Merge Sort: ";
+        printList(list);
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        cout << "Merge sort execution time: " << duration.count() << " microseconds" << endl;
+    }
+
+    return 0;
+}
